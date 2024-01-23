@@ -1,0 +1,71 @@
+install docker 
+docker build --build-arg TMDB_V3_API_KEY=81576add211663b7ce550ad9dc7864ed -t netflix .   
+
+
+docker run -d -p 8080:80 netflix:latest
+
+install sonar using docker 
+docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
+
+password : sonar
+
+install trivy
+
+trivy version
+
+trivy fs . -- to check the current file system
+trivy image imageId  --- to check the image
+
+
+install java , jenkins
+
+
+login to jenkins
+
+manageplugins - available plugins 
+nodejs 1.6.1
+eclipse temurin installer 1.5
+sonarqube scanner 2.16.1
+OWASP  -- dependency scanner
+Docker
+Docker Commons
+Docker Pipeline
+Docker API
+docker-build-step
+
+
+
+
+Manage Jenkins - Tools
+jdk - install from adoptium.net - jdk-17.0.8.1+1   -- name  as  jdk17
+NodeJS installations - NodeJS-16.2.0   --- name as node16
+
+
+
+
+soanr configuration in jenkins
+login to sonar --- administrations  --- security -- users   -- clock on tokens  -- name -- generaate token =====  squ_345b5b34192ed742a6945c5cf97f806a3196313f
+go to projects  --- name -- select locally  -- token -- others  -- linux  -- Generated Token -->  sonar-scanner -Dsonar.projectKey=Netflix -Dsonar.sources=. -Dsonar.host.url=http://15.207.18.121:9000 -Dsonar.login=sqp_9bf06e27a40f65217f998746fc923d1c30994d11
+
+
+login to jenkins and add the sonarqube token
+manage jenkins -- credentials -- system  -- global credentials(unrestricted) -- secrettext  -- global  -- secret is token(squ_345b5b34192ed742a6945c5cf97f806a3196313f)  --- ID is sonar-token -- sonar-token
+
+manage jenkins -- system -- soanrqube Installations --- name as sonar-server -- url: http://15.207.18.121:9000/  --- select soanr token below option
+
+manage jenkins  -- Tools --- sonarquber scanner installation -- name as sonar-scanner  -- vesion : 5.0.1.3006 leave as latest
+
+
+create pipeline and paste pipeline code and run the build -- 
+
+
+Install more plugins like -- OWASP Dependency Check 5.4.3 , Docker , Docker Commons , Docker Pipeline , Docker API , docker-build-step
+
+to push the image to docker hub from the jenkins pipeline we need to provide our credentials of docker 
+manage jenkins -- credentials -- system  -- global credentials(unrestricted) -- usernameand password  -- global -- durga4pdp -- Money@420  -- docker -- docker
+
+manage jenkins  -- Tools --- (OWASP Plugin related one) --- Dependency check Installation ---  Name as DP-Check  --  install automatically from github.com -- dependency-check 8.4.0
+ 
+manage jenkins  -- Tools --- Docker Installtion --- Name as docker  -- install automatically from docker.com  -- latest
+
+
