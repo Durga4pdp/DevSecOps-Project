@@ -69,3 +69,126 @@ manage jenkins  -- Tools --- (OWASP Plugin related one) --- Dependency check Ins
 manage jenkins  -- Tools --- Docker Installtion --- Name as docker  -- install automatically from docker.com  -- latest
 
 
+
+=============Jenkinsfile==================
+
+
+pipeline{
+    agent any
+    tools{
+        jdk 'jdk17'
+        nodejs 'node16'
+    }
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+    stages {
+        stage('clean workspace'){
+            steps{
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git'){
+            steps{
+                git branch: 'main', url: 'https://github.com/durga4pdp/DevSecOps-Project.git'
+            }
+        }
+        stage("Sonarqube Analysis "){
+            steps{
+                withSonarQubeEnv('sonar-server') {
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Netflix \
+                    -Dsonar.projectKey=Netflix '''
+                }
+            }
+        }
+        stage("quality gate"){
+           steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
+                }
+            } 
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh "npm install"
+            }
+        }
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('TRIVY FS SCAN') {
+            steps {
+                sh "trivy fs . > trivyfs.txt"
+            }
+        }
+        stage("Docker Build & Push"){
+            steps{
+                script{
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
+                       sh "docker build --build-arg TMDB_V3_API_KEY=81576add211663b7ce550ad9dc7864ed -t netflix ."
+                       sh "docker tag netflix durga4pdp/netflix:latest "
+                       sh "docker push durga4pdp/netflix:latest "
+                    }
+                }
+            }
+        }
+        stage("TRIVY"){
+            steps{
+                sh "trivy image nasi101/netflix:latest > trivyimage.txt" 
+            }
+        }
+        stage('Deploy to container'){
+            steps{
+                sh 'docker run -d -p 8081:80 durga4pdp/netflix:latest'
+            }
+        }
+    }
+}
+
+
+==========================================
+
+=== prometheus installation ====
+
+adding targets
+http://13.201.131.176:9090/targets?search=
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "node_exporter"
+    static_configs:
+      - targets: ["localhost:9100"]
+
+  - job_name: 'jenkins'
+    metrics_path: '/prometheus'
+    static_configs:
+      - targets: ['15.207.18.121:8080']
+
+
+install grafana 
+
+grafana login : http://13.201.131.176:3000/dashboard/import
+grafana : 1860
+jenkins : 9964
+
+
+------
+
+email integration
+
+google mail login  -- security  -- app password --- login with mail password --- name ---- password
+
+
+manage jenkins --- system ---  E-mail Notification   --- SMTP server  smtp.gmail.com   --- ouremail@gmail.com  --- use SMTP Authentication , SSL --- mailID -- app password --- SMTP port  465 --- Test configuration by sending test e-mail   --- receiveremail@gmail.com
+ 
+manage jenkins --- system --- Extended E-mail Notification  --- SMTP server  smtp.gmail.com  -- port 465  --- advanced -- mailId password from Glocal credentials of  ouremail@gmail.com ---  use ssl -- Default Content Type  - HTML /html  -- Default Triggers  --- always   --save
