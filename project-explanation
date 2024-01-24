@@ -1,5 +1,5 @@
 install docker 
-docker build --build-arg TMDB_V3_API_KEY=81576add211663b7ce550ad9dc7864ed -t netflix .   
+docker build --build-arg TMDB_V3_API_KEY=81576addd211o663b7nce550ad9tdc7864ed -t netflix .   
 
 
 docker run -d -p 8080:80 netflix:latest
